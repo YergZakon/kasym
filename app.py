@@ -92,13 +92,17 @@ def main():
         st.session_state.selected_option = None
     if 'test_complete' not in st.session_state:
         st.session_state.test_complete = False
+    if 'question_count' not in st.session_state:
+        st.session_state.question_count = 10
     
     # Эмодзи для предметов
     subject_emoji = {
         "Математика": "🔢",
         "Русский язык": "🇷🇺",
         "Английский язык": "🇬🇧",
-        "Казахский язык": "🇰🇿"
+        "Казахский язык": "🇰🇿",
+        "Познание мира": "🌍",
+        "Литература": "📚"
     }
     
     # Главная страница
@@ -108,13 +112,28 @@ def main():
         st.markdown('<div class="emoji-title">📚✏️🎓</div>', unsafe_allow_html=True)
         st.write("### Привет! Выбери предмет для тестирования:")
         
+        # Выбор количества вопросов перед началом теста
+        st.session_state.question_count = st.slider(
+            "Выбери количество вопросов:", 
+            min_value=5, 
+            max_value=20, 
+            value=10,
+            step=5
+        )
+        
         col1, col2 = st.columns(2)
         
+        subjects_list = list(all_questions.keys())
+        half_count = len(subjects_list) // 2
+        
         with col1:
-            for subject in list(all_questions.keys())[:2]:
+            for subject in subjects_list[:half_count]:
                 if st.button(f"{subject_emoji[subject]} {subject}", key=subject):
                     st.session_state.current_subject = subject
-                    st.session_state.questions = random.sample(all_questions[subject], min(10, len(all_questions[subject])))
+                    st.session_state.questions = random.sample(
+                        all_questions[subject], 
+                        min(st.session_state.question_count, len(all_questions[subject]))
+                    )
                     st.session_state.current_question_idx = 0
                     st.session_state.score = 0
                     st.session_state.answered = False
@@ -122,10 +141,13 @@ def main():
                     st.experimental_rerun()
         
         with col2:
-            for subject in list(all_questions.keys())[2:]:
+            for subject in subjects_list[half_count:]:
                 if st.button(f"{subject_emoji[subject]} {subject}", key=subject):
                     st.session_state.current_subject = subject
-                    st.session_state.questions = random.sample(all_questions[subject], min(10, len(all_questions[subject])))
+                    st.session_state.questions = random.sample(
+                        all_questions[subject], 
+                        min(st.session_state.question_count, len(all_questions[subject]))
+                    )
                     st.session_state.current_question_idx = 0
                     st.session_state.score = 0
                     st.session_state.answered = False
@@ -190,17 +212,25 @@ def main():
             else:
                 st.markdown('<div style="text-align: center; font-size: 24px; color: red;">Надо больше учиться! 📚</div>', unsafe_allow_html=True)
             
-            if st.button("Вернуться на главную"):
-                st.session_state.current_subject = None
-                st.experimental_rerun()
+            # Кнопки после завершения теста
+            col1, col2 = st.columns(2)
             
-            if st.button("Пройти тест еще раз"):
-                st.session_state.questions = random.sample(all_questions[st.session_state.current_subject], min(10, len(all_questions[st.session_state.current_subject])))
-                st.session_state.current_question_idx = 0
-                st.session_state.score = 0
-                st.session_state.answered = False
-                st.session_state.test_complete = False
-                st.experimental_rerun()
+            with col1:
+                if st.button("Вернуться на главную"):
+                    st.session_state.current_subject = None
+                    st.experimental_rerun()
+            
+            with col2:
+                if st.button("Пройти тест еще раз"):
+                    st.session_state.questions = random.sample(
+                        all_questions[st.session_state.current_subject], 
+                        min(st.session_state.question_count, len(all_questions[st.session_state.current_subject]))
+                    )
+                    st.session_state.current_question_idx = 0
+                    st.session_state.score = 0
+                    st.session_state.answered = False
+                    st.session_state.test_complete = False
+                    st.experimental_rerun()
 
 if __name__ == "__main__":
     main() 
